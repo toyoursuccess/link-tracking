@@ -1,0 +1,23 @@
+{
+  "name": "toyoursuccess-link-tracking",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "type": "module",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathon Hill",
+  "license": "ISC",
+  "devDependencies": {
+    "semistandard": "^17.0.0",
+    "serverless": "^4.4.7",
+    "serverless-jetpack": "^0.11.2"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "serverless-mysql": "^1.5.5"
+  }
+}

@@ -1,0 +1,78 @@
+org: toyoursuccess
+app: toyoursuccess-link-tracking
+service: toyoursuccess-link-tracking
+
+plugins:
+  - serverless-jetpack
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+custom:
+  jetpack:
+    concurrency: 4
+    preInclude:
+      - "!**" # start with nothing
+    trace:
+      ignores:
+        # Lambda comes with aws-sdk preinstalled
+        - "@aws-sdk/client-dynamodb"
+        - "@aws-sdk/client-lambda"
+        - "@aws-sdk/client-s3"
+        - "@aws-sdk/client-sns"
+        - "@aws-sdk/client-sqs"
+        - "@aws-sdk/lib-dynamodb"
+        - "@aws-sdk/lib-storage"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: dev
+  profile: tys
+  logs:
+    httpApi: true
+  httpApi:
+    metrics: true
+    shouldStartNameWithService: true
+  environment:
+    STAGE: ${sls:stage}
+    DB_MYSQL_HOST: ${ssm:/automation/${sls:stage}/DB_HOST}
+    DB_MYSQL_PORT: 3306
+    DB_MYSQL_USER: ${ssm:/automation/${sls:stage}/DB_USER}
+    DB_MYSQL_PASS: ${ssm:/automation/${sls:stage}/DB_PASS}
+    DB_MYSQL_NAME: tysdb
+    DB_MYSQL_TABLE: email_link_clicks
+  iam:
+    role:
+      statements:
+        - Effect: "Allow" # xray permissions (required)
+          Action:
+            - "xray:PutTraceSegments"
+            - "xray:PutTelemetryRecords"
+          Resource:
+            - "*"
+  vpc:
+    securityGroupIds:
+      - sg-0809bb670fdf865b2
+    subnetIds:
+      - subnet-160fb51a
+      - subnet-4ccda976
+      - subnet-a456c9c1
+
+functions:
+  LinkTracking:
+    handler: src/LinkTracking.handler
+    name: LinkTracking-${sls:stage}
+    timeout: 25
+    events:
+      - httpApi:
+          method: GET
+          path: /{messageId}/{redir+}
+
+outputs:
+  ApiGatewayId:
+    Export:
+      Name: ApiGatewayId-${sls:stage}
+    Value:
+      "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
