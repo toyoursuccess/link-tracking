@@ -12,8 +12,12 @@ export const handler = createHandler(
 
       console.log(event.requestContext.http.sourceIp, event.pathParameters.messageId, url.toString());
 
+      const sql = 'INSERT INTO ' + DB_MYSQL_TABLE +
+        ' (messageId, url, domain, path, query, hash, ipv4, userAgent, referer)' +
+        ' VALUES(?,?,?,?,?,?,?,?,?)';
+
       const query = {
-        sql: 'INSERT INTO ' + DB_MYSQL_TABLE + ' (messageId, url, domain, path, query, hash, ipv4, userAgent, referer) VALUES(?,?,?,?,?,?,?,?,?)',
+        sql,
         values: [
           event.pathParameters.messageId,
           url.toString(),
@@ -24,12 +28,16 @@ export const handler = createHandler(
           event.requestContext.http.sourceIp,
           event.requestContext.http.userAgent,
           event.headers.Referer
-        ]
+        ],
+        timeout: 22 * 1000
       };
 
-      const result = await this.mysql.query(query);
-
-      console.log('Click record:', result.insertId);
+      try {
+        const result = await this.mysql.query(query);
+        console.log('Click record:', result.insertId);
+      } catch (e) {
+        console.error('Query failed:', query, e);
+      }
 
       return {
         statusCode: 301,
